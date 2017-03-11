@@ -114,10 +114,10 @@ define('DB_HOST2', $creds['hostname']);
  * the 'global' dataset. (Every table is in 'global' by default.)
  */
 $wpdb->add_database( array(
-	'host'     => DB_HOST2,     // If port is other than 3306, use host:port.
-	'user'     => DB_USER2,
-	'password' => DB_PASSWORD2,
-	'name'     => DB_NAME2,
+	'host'     => DB_HOST,     // If port is other than 3306, use host:port.
+	'user'     => DB_USER,
+	'password' => DB_PASSWORD,
+	'name'     => DB_NAME,
 ) );
 
 
