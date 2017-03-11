@@ -67,17 +67,59 @@ $wpdb->max_connections = 10;
 $wpdb->check_tcp_responsiveness = true;
 
 /**
+ * This code is for getting configuration of second connected database 
+ * from cloud foundry configuration
+
+ */
+$vcap = getenv('VCAP_SERVICES');
+$data = json_decode($vcap, true);
+if (isset($data)) {
+  if (isset($data['cleardb'][1]['credentials'])) {
+    $creds = $data['cleardb'][1]['credentials'];
+  }
+  elseif (isset($data['user-provided'][1]['credentials'])) {
+    $rawcreds = $data['user-provided'][1]['credentials'];
+    $creds = parse_url($rawcreds['uri']);
+      if ($creds['scheme'] === 'mysql') {
+        // ** Normalizing expected keys to parseURL calculated values ** //
+        $creds['name'] = substr($creds['path'], 1);
+        $creds['username'] = $creds['user'];
+        $creds['password'] = $creds['pass'];
+        $creds['hostname'] = $creds['host'] . ':' . $creds['port'];
+      }
+  }
+  elseif (isset($data['compose-for-mysql'][1]['credentials'])) {
+    $rawcreds = $data['compose-for-mysql'][1]['credentials'];
+    $creds = parse_url($rawcreds['uri']);
+      if ($creds['scheme'] === 'mysql') {
+        // ** Normalizing expected keys to parseURL calculated values ** //
+        $creds['name'] = substr($creds['path'], 1);
+        $creds['username'] = $creds['user'];
+        $creds['password'] = $creds['pass'];
+        $creds['hostname'] = $creds['host'] . ':' . $creds['port'];
+      }
+  }
+}
+define('DB_NAME2', $creds['name']);
+/** MySQL database username */
+define('DB_USER2', $creds['username']);
+/** MySQL database password */
+define('DB_PASSWORD2', $creds['password']);
+/** MySQL hostname */
+define('DB_HOST2', $creds['hostname']);
+/**
  * This is the most basic way to add a server to LudicrousDB using only the
  * required parameters: host, user, password, name.
  * This adds the DB defined in wp-config.php as a read/write server for
  * the 'global' dataset. (Every table is in 'global' by default.)
  */
 $wpdb->add_database( array(
-	'host'     => DB_HOST,     // If port is other than 3306, use host:port.
-	'user'     => DB_USER,
-	'password' => DB_PASSWORD,
-	'name'     => DB_NAME,
+	'host'     => DB_HOST2,     // If port is other than 3306, use host:port.
+	'user'     => DB_USER2,
+	'password' => DB_PASSWORD2,
+	'name'     => DB_NAME2,
 ) );
+
 
 /**
  * This adds the same server again, only this time it is configured as a slave.
@@ -90,6 +132,6 @@ $wpdb->add_database( array(
 	'name'     => DB_NAME,
 	'write'    => 0,
 	'read'     => 1,
-	'dataset'  => 'global',
+	'dataset'  => 'second',
 	'timeout'  => 0.2,
 ) );
